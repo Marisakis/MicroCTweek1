@@ -1,40 +1,63 @@
-/**
- * \file
- *
- * \brief Empty user application template
- *
- */
+#define F_CPU 8000000UL
 
-/**
- * \mainpage User Application template doxygen documentation
- *
- * \par Empty user application template
- *
- * Bare minimum empty user application template
- *
- * \par Content
- *
- * -# Include the ASF header files (through asf.h)
- * -# "Insert system clock initialization code here" comment
- * -# Minimal main function that starts with a call to board_init()
- * -# "Insert application code here" comment
- *
- */
+#include <avr/io.h>
+#include <util/delay.h>
+#include <stdbool.h>
 
-/*
- * Include header files for all drivers that have been imported from
- * Atmel Software Framework (ASF).
- */
-/*
- * Support and FAQ: visit <a href="https://www.microchip.com/support/">Microchip Support</a>
- */
-#include <asf.h>
 
-int main (void)
+int wait(int ms)
 {
-	/* Insert system clock initialization code here (sysclk_init()). */
-
-	board_init();
-
-	/* Insert application code here, after the board has been initialized. */
+	for(int i = 0; i < ms; i++)
+	{
+		_delay_ms(1);
+		if(PINC & 0x80) {
+			return 1;
+		}
+	}
+	return 0;
 }
+
+int main(void)
+{
+	DDRD = 0b01111111;
+	PORTC = 0x10;
+	bool state = true;
+	bool clicked = false;
+	
+	while (1)
+	{
+		if(PINC & 0x80)
+		{
+			if(!clicked) {
+				clicked = true;
+				state = !state;
+			}
+		}
+		else
+		{
+			clicked = false;
+		}
+		
+		int btnPressed;
+		if(state) {
+			PORTD = 0x01;
+			btnPressed = wait(1000);
+			if(btnPressed < 1) {
+				PORTD = 0x00;
+				wait(1000);
+			}
+		}
+		else {
+			PORTD = 0x01;
+			btnPressed = wait(250);
+			if(btnPressed < 1) {
+				PORTD = 0x00;
+				btnPressed = wait(250);
+			}
+		}
+		
+	}
+
+	return 1;
+}
+
