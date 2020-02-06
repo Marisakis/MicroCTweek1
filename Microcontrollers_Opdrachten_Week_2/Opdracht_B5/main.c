@@ -59,10 +59,7 @@ void init(void)
 
 void set_cursor(int position)
 {
-	write_command(0x02);
-	for(int i = 0; i < position; i++)
-		write_command(0x1E);
-	//write_command(128 + position);
+	write_command(128 + position);
 }
 
 void write_command(unsigned char byte)
