@@ -1,4 +1,4 @@
-#define F_CPU 8000000UL
+#define F_CPU 8000000
 
 #include <avr/io.h>
 #include <util/delay.h>
@@ -14,27 +14,39 @@ void wait(int ms)
 
 ISR(INT0_vect)
 {
-	int pordD = PORTD;
-	pordD = pordD << 1;
-	if(pordD == 0x00)
-		pordD = 0x01;
-	PORTD |= pordD;
+	//int pordC = pordC;
+	//pordC = pordC << 1;
+	//if(pordC == 0x00)
+	//	pordC = 0x01;
+	//PORTC |= pordC;
+	PORTC = PORTC << 1;			
+	if (PORTC == 0)
+	{
+		PORTC = 0x01;
+	}
+	wait(0); // temporary solution to prevent mnultiple interrupts from one press
 }
 
 ISR(INT1_vect)
 {
-	int pordD = PORTD;
-	if(pordD == 0x00)
-		pordD = 0xBF;
-	PORTD |= pordD;
+	//int pordC = PORTC;
+	//if(pordC == 0x00)
+	//	pordC = 0xFF;
+	//PORTC |= pordC;
+	PORTC = PORTC >> 1;
+	if (PORTC == 0)
+	{
+		PORTC = 0x80;
+	}
+		wait(0); // temporary solution to prevent mnultiple interrupts from one press
 }
 
 int main(void)
 {
-	DDRD = 0xFF;
-	DDRC = 0x01;
+	DDRD = 0x80;
+	DDRC = 0xFF;
+	PORTC = 0x00;
 	
-	PORTD = 0x01;
 	
 	EICRA |= 0x0B;
 	EIMSK |= 0x03;
@@ -43,7 +55,7 @@ int main(void)
 	
     while (1) 
     {
-		PORTC ^= 0x01;
+		PORTD ^= 0x80;
 		wait(500);
     }
 	

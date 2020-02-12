@@ -4,7 +4,7 @@
 #include <util/delay.h>
 
 typedef struct {
-	volatile uint8_t* port;
+	uint8_t* port;
 	unsigned char data;
 	unsigned int delay;
 } LOOKUP;
@@ -25,7 +25,7 @@ int main(void)
 	
 	LOOKUP pattern[] =
 	{
-		{PORTD, 0x00, 100}, {PORTD, 0x01,100}, {PORTD, 0x00, 0x00}
+		{&PORTD, 0x00, 100}, {&PORTD, 0x01,100}, {&PORTD, 0x00, 0x00}
 		//{0x02,100},{0x04,100},{0x08,100},{0x10,100},{0x20,100},{0x40,100},{0x80,100},
 		//{0x00, 100}, {0xFF, 100},
 		//{0x00, 100},{0x00, 0x00}
