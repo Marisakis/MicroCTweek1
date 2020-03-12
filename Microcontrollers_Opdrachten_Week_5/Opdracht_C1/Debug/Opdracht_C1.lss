@@ -3,29 +3,29 @@ Opdracht_C1.elf:     file format elf32-avr
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .data         00000000  00800100  00800100  00000330  2**0
+  0 .data         00000000  00800100  00800100  000004f0  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  1 .text         000002dc  00000000  00000000  00000054  2**1
+  1 .text         0000049c  00000000  00000000  00000054  2**1
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .comment      00000030  00000000  00000000  00000330  2**0
+  2 .comment      00000030  00000000  00000000  000004f0  2**0
                   CONTENTS, READONLY
-  3 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  00000360  2**2
+  3 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  00000520  2**2
                   CONTENTS, READONLY
-  4 .debug_aranges 00000080  00000000  00000000  000003a0  2**0
+  4 .debug_aranges 00000088  00000000  00000000  00000560  2**0
                   CONTENTS, READONLY, DEBUGGING
-  5 .debug_info   00000ed1  00000000  00000000  00000420  2**0
+  5 .debug_info   000010a8  00000000  00000000  000005e8  2**0
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_abbrev 00000925  00000000  00000000  000012f1  2**0
+  6 .debug_abbrev 00000937  00000000  00000000  00001690  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_line   00000522  00000000  00000000  00001c16  2**0
+  7 .debug_line   000005fd  00000000  00000000  00001fc7  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_frame  00000124  00000000  00000000  00002138  2**2
+  8 .debug_frame  00000198  00000000  00000000  000025c4  2**2
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_str    000004fe  00000000  00000000  0000225c  2**0
+  9 .debug_str    0000052e  00000000  00000000  0000275c  2**0
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_loc    00000256  00000000  00000000  0000275a  2**0
+ 10 .debug_loc    00000577  00000000  00000000  00002c8a  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_ranges 00000070  00000000  00000000  000029b0  2**0
+ 11 .debug_ranges 00000078  00000000  00000000  00003201  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -109,8 +109,8 @@ Disassembly of section .text:
   92:	d0 e1       	ldi	r29, 0x10	; 16
   94:	de bf       	out	0x3e, r29	; 62
   96:	cd bf       	out	0x3d, r28	; 61
-  98:	bd d0       	rcall	.+378    	; 0x214 <main>
-  9a:	1e c1       	rjmp	.+572    	; 0x2d8 <_exit>
+  98:	5e d1       	rcall	.+700    	; 0x356 <main>
+  9a:	fe c1       	rjmp	.+1020   	; 0x498 <_exit>
 
 0000009c <__bad_interrupt>:
   9c:	b1 cf       	rjmp	.-158    	; 0x0 <__vectors>
@@ -220,7 +220,8 @@ void displayOff()
 00000146 <spi_writeWord>:
 }
 
-void spi_writeWord ( unsigned char adress, unsigned char data )
+// Write value [data] to a single segment with address [address]
+void spi_writeWord(unsigned char address, unsigned char data)
 {
  146:	cf 93       	push	r28
  148:	df 93       	push	r29
@@ -229,7 +230,7 @@ void spi_writeWord ( unsigned char adress, unsigned char data )
 	spi_slaveSelect(0); // Select display chip
  14e:	80 e0       	ldi	r24, 0x00	; 0
  150:	c2 df       	rcall	.-124    	; 0xd6 <spi_slaveSelect>
-	spi_write(adress); // digit adress: (digit place)
+	spi_write(address); // digit adress: (digit place)
  152:	8d 2f       	mov	r24, r29
  154:	bc df       	rcall	.-136    	; 0xce <spi_write>
 	spi_write(data); // digit value: 0
@@ -243,263 +244,619 @@ void spi_writeWord ( unsigned char adress, unsigned char data )
  160:	cf 91       	pop	r28
  162:	08 95       	ret
 
-00000164 <writeLedDisplayA>:
- 164:	cf 93       	push	r28
+00000164 <getDigitCount>:
+ 164:	18 16       	cp	r1, r24
+
+// Returns the number of digits in the value given
+int getDigitCount(int value)
+{	
+	int count = 0;
+	while(value > 0)
+ 166:	19 06       	cpc	r1, r25
+ 168:	6c f4       	brge	.+26     	; 0x184 <getDigitCount+0x20>
+ 16a:	20 e0       	ldi	r18, 0x00	; 0
+ 16c:	30 e0       	ldi	r19, 0x00	; 0
+	{
+		value /= 10;
+ 16e:	ea e0       	ldi	r30, 0x0A	; 10
+ 170:	f0 e0       	ldi	r31, 0x00	; 0
+ 172:	bf 01       	movw	r22, r30
+ 174:	2d d1       	rcall	.+602    	; 0x3d0 <__divmodhi4>
+ 176:	cb 01       	movw	r24, r22
+		count++;
+ 178:	2f 5f       	subi	r18, 0xFF	; 255
+ 17a:	3f 4f       	sbci	r19, 0xFF	; 255
+
+// Returns the number of digits in the value given
+int getDigitCount(int value)
+{	
+	int count = 0;
+	while(value > 0)
+ 17c:	18 16       	cp	r1, r24
+ 17e:	19 06       	cpc	r1, r25
+ 180:	c4 f3       	brlt	.-16     	; 0x172 <getDigitCount+0xe>
+ 182:	02 c0       	rjmp	.+4      	; 0x188 <getDigitCount+0x24>
+}
+
+// Returns the number of digits in the value given
+int getDigitCount(int value)
+{	
+	int count = 0;
+ 184:	20 e0       	ldi	r18, 0x00	; 0
+ 186:	30 e0       	ldi	r19, 0x00	; 0
+	{
+		value /= 10;
+		count++;
+	}
+	return count;
+}
+ 188:	c9 01       	movw	r24, r18
+ 18a:	08 95       	ret
+
+0000018c <writeLedDisplayA>:
 
 // Write value of only positive value to display
 void writeLedDisplayA(int value)
 {
- 166:	df 93       	push	r29
- 168:	00 d0       	rcall	.+0      	; 0x16a <writeLedDisplayA+0x6>
- 16a:	00 d0       	rcall	.+0      	; 0x16c <writeLedDisplayA+0x8>
- 16c:	cd b7       	in	r28, 0x3d	; 61
- 16e:	de b7       	in	r29, 0x3e	; 62
-	if(value < 0 || value > 9999)
- 170:	80 31       	cpi	r24, 0x10	; 16
- 172:	27 e2       	ldi	r18, 0x27	; 39
- 174:	92 07       	cpc	r25, r18
- 176:	90 f4       	brcc	.+36     	; 0x19c <writeLedDisplayA+0x38>
-		return;
-		
-	char num[4];
-	itoa(value, num, 10);
- 178:	4a e0       	ldi	r20, 0x0A	; 10
- 17a:	50 e0       	ldi	r21, 0x00	; 0
- 17c:	be 01       	movw	r22, r28
- 17e:	6f 5f       	subi	r22, 0xFF	; 255
- 180:	7f 4f       	sbci	r23, 0xFF	; 255
- 182:	6d d0       	rcall	.+218    	; 0x25e <itoa>
-	spi_writeWord(4, num[0]);
- 184:	69 81       	ldd	r22, Y+1	; 0x01
- 186:	84 e0       	ldi	r24, 0x04	; 4
- 188:	de df       	rcall	.-68     	; 0x146 <spi_writeWord>
-	spi_writeWord(3, num[1]);
- 18a:	6a 81       	ldd	r22, Y+2	; 0x02
- 18c:	83 e0       	ldi	r24, 0x03	; 3
- 18e:	db df       	rcall	.-74     	; 0x146 <spi_writeWord>
-	spi_writeWord(2, num[2]);
- 190:	6b 81       	ldd	r22, Y+3	; 0x03
- 192:	82 e0       	ldi	r24, 0x02	; 2
- 194:	d8 df       	rcall	.-80     	; 0x146 <spi_writeWord>
-	spi_writeWord(1, num[3]);
- 196:	6c 81       	ldd	r22, Y+4	; 0x04
- 198:	81 e0       	ldi	r24, 0x01	; 1
- 19a:	d5 df       	rcall	.-86     	; 0x146 <spi_writeWord>
- 19c:	0f 90       	pop	r0
+ 18c:	7f 92       	push	r7
+ 18e:	8f 92       	push	r8
+ 190:	9f 92       	push	r9
+ 192:	af 92       	push	r10
+ 194:	bf 92       	push	r11
+ 196:	cf 92       	push	r12
+ 198:	df 92       	push	r13
+ 19a:	ef 92       	push	r14
+ 19c:	ff 92       	push	r15
+ 19e:	0f 93       	push	r16
+ 1a0:	1f 93       	push	r17
+ 1a2:	cf 93       	push	r28
+ 1a4:	df 93       	push	r29
+ 1a6:	cd b7       	in	r28, 0x3d	; 61
+ 1a8:	de b7       	in	r29, 0x3e	; 62
+ 1aa:	8c 01       	movw	r16, r24
+	for(int i = 0; i < numberCount; i++)
+	{
+		spi_writeWord(currentAddress, num[i]);
+		currentAddress--;
+	}
 }
- 19e:	0f 90       	pop	r0
- 1a0:	0f 90       	pop	r0
- 1a2:	0f 90       	pop	r0
- 1a4:	df 91       	pop	r29
- 1a6:	cf 91       	pop	r28
- 1a8:	08 95       	ret
+ 1ac:	cd b6       	in	r12, 0x3d	; 61
+ 1ae:	de b6       	in	r13, 0x3e	; 62
+	return count;
+}
 
-000001aa <writeLedDisplayB>:
- 1aa:	0f 93       	push	r16
+// Write value of only positive value to display
+void writeLedDisplayA(int value)
+{
+ 1b0:	ad b6       	in	r10, 0x3d	; 61
+ 1b2:	be b6       	in	r11, 0x3e	; 62
+	if(value < 0 || value > 9999)
+ 1b4:	00 31       	cpi	r16, 0x10	; 16
+ 1b6:	87 e2       	ldi	r24, 0x27	; 39
+ 1b8:	18 07       	cpc	r17, r24
+ 1ba:	c8 f5       	brcc	.+114    	; 0x22e <writeLedDisplayA+0xa2>
+		return;
+	
+	int numberCount = getDigitCount(value);
+ 1bc:	c8 01       	movw	r24, r16
+ 1be:	d2 df       	rcall	.-92     	; 0x164 <getDigitCount>
+ 1c0:	7c 01       	movw	r14, r24
+	char num[numberCount];
+ 1c2:	ed b7       	in	r30, 0x3d	; 61
+ 1c4:	fe b7       	in	r31, 0x3e	; 62
+ 1c6:	e8 1b       	sub	r30, r24
+ 1c8:	f9 0b       	sbc	r31, r25
+ 1ca:	0f b6       	in	r0, 0x3f	; 63
+ 1cc:	f8 94       	cli
+ 1ce:	fe bf       	out	0x3e, r31	; 62
+ 1d0:	0f be       	out	0x3f, r0	; 63
+ 1d2:	ed bf       	out	0x3d, r30	; 61
+ 1d4:	8d b7       	in	r24, 0x3d	; 61
+ 1d6:	9e b7       	in	r25, 0x3e	; 62
+ 1d8:	01 96       	adiw	r24, 0x01	; 1
+ 1da:	4c 01       	movw	r8, r24
+	itoa(value, num, 10);
+ 1dc:	4a e0       	ldi	r20, 0x0A	; 10
+ 1de:	50 e0       	ldi	r21, 0x00	; 0
+ 1e0:	bc 01       	movw	r22, r24
+ 1e2:	c8 01       	movw	r24, r16
+ 1e4:	1c d1       	rcall	.+568    	; 0x41e <itoa>
+	
+	int currentAddress = numberCount;
+	for(int i = 4; i >= numberCount; i--)
+ 1e6:	95 e0       	ldi	r25, 0x05	; 5
+ 1e8:	e9 16       	cp	r14, r25
+ 1ea:	f1 04       	cpc	r15, r1
+ 1ec:	54 f4       	brge	.+20     	; 0x202 <writeLedDisplayA+0x76>
+ 1ee:	04 e0       	ldi	r16, 0x04	; 4
+ 1f0:	10 e0       	ldi	r17, 0x00	; 0
+		spi_writeWord(i, 15);
+ 1f2:	6f e0       	ldi	r22, 0x0F	; 15
+ 1f4:	80 2f       	mov	r24, r16
+ 1f6:	a7 df       	rcall	.-178    	; 0x146 <spi_writeWord>
+	int numberCount = getDigitCount(value);
+	char num[numberCount];
+	itoa(value, num, 10);
+	
+	int currentAddress = numberCount;
+	for(int i = 4; i >= numberCount; i--)
+ 1f8:	01 50       	subi	r16, 0x01	; 1
+ 1fa:	11 09       	sbc	r17, r1
+ 1fc:	0e 15       	cp	r16, r14
+ 1fe:	1f 05       	cpc	r17, r15
+ 200:	c4 f7       	brge	.-16     	; 0x1f2 <writeLedDisplayA+0x66>
+		spi_writeWord(i, 15);
+	for(int i = 0; i < numberCount; i++)
+ 202:	1e 14       	cp	r1, r14
+ 204:	1f 04       	cpc	r1, r15
+ 206:	6c f4       	brge	.+26     	; 0x222 <writeLedDisplayA+0x96>
+ 208:	84 01       	movw	r16, r8
+ 20a:	7e 2c       	mov	r7, r14
+ 20c:	e8 0c       	add	r14, r8
+ 20e:	f9 1c       	adc	r15, r9
+	{
+		spi_writeWord(currentAddress, num[i]);
+ 210:	f8 01       	movw	r30, r16
+ 212:	61 91       	ld	r22, Z+
+ 214:	8f 01       	movw	r16, r30
+ 216:	87 2d       	mov	r24, r7
+ 218:	96 df       	rcall	.-212    	; 0x146 <spi_writeWord>
+ 21a:	7a 94       	dec	r7
+	itoa(value, num, 10);
+	
+	int currentAddress = numberCount;
+	for(int i = 4; i >= numberCount; i--)
+		spi_writeWord(i, 15);
+	for(int i = 0; i < numberCount; i++)
+ 21c:	e0 16       	cp	r14, r16
+ 21e:	f1 06       	cpc	r15, r17
+ 220:	b9 f7       	brne	.-18     	; 0x210 <writeLedDisplayA+0x84>
+ 222:	0f b6       	in	r0, 0x3f	; 63
+ 224:	f8 94       	cli
+ 226:	be be       	out	0x3e, r11	; 62
+ 228:	0f be       	out	0x3f, r0	; 63
+ 22a:	ad be       	out	0x3d, r10	; 61
+ 22c:	05 c0       	rjmp	.+10     	; 0x238 <writeLedDisplayA+0xac>
+
+// Write value of only positive value to display
+void writeLedDisplayA(int value)
+{
+	if(value < 0 || value > 9999)
+		return;
+ 22e:	0f b6       	in	r0, 0x3f	; 63
+ 230:	f8 94       	cli
+ 232:	de be       	out	0x3e, r13	; 62
+ 234:	0f be       	out	0x3f, r0	; 63
+ 236:	cd be       	out	0x3d, r12	; 61
+	for(int i = 0; i < numberCount; i++)
+	{
+		spi_writeWord(currentAddress, num[i]);
+		currentAddress--;
+	}
+}
+ 238:	0f b6       	in	r0, 0x3f	; 63
+ 23a:	f8 94       	cli
+ 23c:	de be       	out	0x3e, r13	; 62
+ 23e:	0f be       	out	0x3f, r0	; 63
+ 240:	cd be       	out	0x3d, r12	; 61
+ 242:	df 91       	pop	r29
+ 244:	cf 91       	pop	r28
+ 246:	1f 91       	pop	r17
+ 248:	0f 91       	pop	r16
+ 24a:	ff 90       	pop	r15
+ 24c:	ef 90       	pop	r14
+ 24e:	df 90       	pop	r13
+ 250:	cf 90       	pop	r12
+ 252:	bf 90       	pop	r11
+ 254:	af 90       	pop	r10
+ 256:	9f 90       	pop	r9
+ 258:	8f 90       	pop	r8
+ 25a:	7f 90       	pop	r7
+ 25c:	08 95       	ret
+
+0000025e <writeLedDisplayB>:
 
 // Write value of a negative or positive value to display
 void writeLedDisplayB(int value)
 {
- 1ac:	1f 93       	push	r17
- 1ae:	cf 93       	push	r28
- 1b0:	df 93       	push	r29
- 1b2:	00 d0       	rcall	.+0      	; 0x1b4 <writeLedDisplayB+0xa>
- 1b4:	1f 92       	push	r1
- 1b6:	cd b7       	in	r28, 0x3d	; 61
- 1b8:	de b7       	in	r29, 0x3e	; 62
+ 25e:	6f 92       	push	r6
+ 260:	7f 92       	push	r7
+ 262:	8f 92       	push	r8
+ 264:	9f 92       	push	r9
+ 266:	af 92       	push	r10
+ 268:	bf 92       	push	r11
+ 26a:	cf 92       	push	r12
+ 26c:	df 92       	push	r13
+ 26e:	ef 92       	push	r14
+ 270:	ff 92       	push	r15
+ 272:	0f 93       	push	r16
+ 274:	1f 93       	push	r17
+ 276:	cf 93       	push	r28
+ 278:	df 93       	push	r29
+ 27a:	cd b7       	in	r28, 0x3d	; 61
+ 27c:	de b7       	in	r29, 0x3e	; 62
+ 27e:	6c 01       	movw	r12, r24
+	for(int i = 0; i < numberCount; i++)
+	{
+		spi_writeWord(currentAddress, num[i]);
+		currentAddress--;
+	}
+}
+ 280:	ad b6       	in	r10, 0x3d	; 61
+ 282:	be b6       	in	r11, 0x3e	; 62
+	}
+}
+
+// Write value of a negative or positive value to display
+void writeLedDisplayB(int value)
+{
+ 284:	8d b6       	in	r8, 0x3d	; 61
+ 286:	9e b6       	in	r9, 0x3e	; 62
 	if(value > 999 || value < -999)
- 1ba:	9c 01       	movw	r18, r24
- 1bc:	29 51       	subi	r18, 0x19	; 25
- 1be:	3c 4f       	sbci	r19, 0xFC	; 252
- 1c0:	2f 3c       	cpi	r18, 0xCF	; 207
- 1c2:	37 40       	sbci	r19, 0x07	; 7
- 1c4:	f8 f4       	brcc	.+62     	; 0x204 <writeLedDisplayB+0x5a>
+ 288:	89 51       	subi	r24, 0x19	; 25
+ 28a:	9c 4f       	sbci	r25, 0xFC	; 252
+ 28c:	8f 3c       	cpi	r24, 0xCF	; 207
+ 28e:	97 40       	sbci	r25, 0x07	; 7
+ 290:	08 f0       	brcs	.+2      	; 0x294 <writeLedDisplayB+0x36>
+ 292:	48 c0       	rjmp	.+144    	; 0x324 <writeLedDisplayB+0xc6>
 		return;
 	
-	char num[3];
+	int numberCount = getDigitCount(abs(value));
+ 294:	86 01       	movw	r16, r12
+ 296:	dd 20       	and	r13, r13
+ 298:	24 f4       	brge	.+8      	; 0x2a2 <writeLedDisplayB+0x44>
+ 29a:	00 27       	eor	r16, r16
+ 29c:	11 27       	eor	r17, r17
+ 29e:	0c 19       	sub	r16, r12
+ 2a0:	1d 09       	sbc	r17, r13
+ 2a2:	c8 01       	movw	r24, r16
+ 2a4:	5f df       	rcall	.-322    	; 0x164 <getDigitCount>
+ 2a6:	7c 01       	movw	r14, r24
+	char num[numberCount];
+ 2a8:	8d b7       	in	r24, 0x3d	; 61
+ 2aa:	9e b7       	in	r25, 0x3e	; 62
+ 2ac:	8e 19       	sub	r24, r14
+ 2ae:	9f 09       	sbc	r25, r15
+ 2b0:	0f b6       	in	r0, 0x3f	; 63
+ 2b2:	f8 94       	cli
+ 2b4:	9e bf       	out	0x3e, r25	; 62
+ 2b6:	0f be       	out	0x3f, r0	; 63
+ 2b8:	8d bf       	out	0x3d, r24	; 61
+ 2ba:	ed b7       	in	r30, 0x3d	; 61
+ 2bc:	fe b7       	in	r31, 0x3e	; 62
+ 2be:	31 96       	adiw	r30, 0x01	; 1
+ 2c0:	3f 01       	movw	r6, r30
 	itoa(abs(value), num, 10);
- 1c6:	9c 01       	movw	r18, r24
- 1c8:	99 23       	and	r25, r25
- 1ca:	24 f4       	brge	.+8      	; 0x1d4 <writeLedDisplayB+0x2a>
- 1cc:	22 27       	eor	r18, r18
- 1ce:	33 27       	eor	r19, r19
- 1d0:	28 1b       	sub	r18, r24
- 1d2:	39 0b       	sbc	r19, r25
- 1d4:	8c 01       	movw	r16, r24
- 1d6:	4a e0       	ldi	r20, 0x0A	; 10
- 1d8:	50 e0       	ldi	r21, 0x00	; 0
- 1da:	be 01       	movw	r22, r28
- 1dc:	6f 5f       	subi	r22, 0xFF	; 255
- 1de:	7f 4f       	sbci	r23, 0xFF	; 255
- 1e0:	c9 01       	movw	r24, r18
- 1e2:	3d d0       	rcall	.+122    	; 0x25e <itoa>
-	spi_writeWord(4, (value < 0) ? 10 : 15);
- 1e4:	11 23       	and	r17, r17
- 1e6:	14 f0       	brlt	.+4      	; 0x1ec <writeLedDisplayB+0x42>
- 1e8:	6f e0       	ldi	r22, 0x0F	; 15
- 1ea:	01 c0       	rjmp	.+2      	; 0x1ee <writeLedDisplayB+0x44>
- 1ec:	6a e0       	ldi	r22, 0x0A	; 10
- 1ee:	84 e0       	ldi	r24, 0x04	; 4
- 1f0:	aa df       	rcall	.-172    	; 0x146 <spi_writeWord>
-	spi_writeWord(3, num[0]);
- 1f2:	69 81       	ldd	r22, Y+1	; 0x01
- 1f4:	83 e0       	ldi	r24, 0x03	; 3
- 1f6:	a7 df       	rcall	.-178    	; 0x146 <spi_writeWord>
-	spi_writeWord(2, num[1]);
- 1f8:	6a 81       	ldd	r22, Y+2	; 0x02
- 1fa:	82 e0       	ldi	r24, 0x02	; 2
- 1fc:	a4 df       	rcall	.-184    	; 0x146 <spi_writeWord>
-	spi_writeWord(1, num[2]);
- 1fe:	6b 81       	ldd	r22, Y+3	; 0x03
- 200:	81 e0       	ldi	r24, 0x01	; 1
- 202:	a1 df       	rcall	.-190    	; 0x146 <spi_writeWord>
- 204:	0f 90       	pop	r0
-}
- 206:	0f 90       	pop	r0
- 208:	0f 90       	pop	r0
- 20a:	df 91       	pop	r29
- 20c:	cf 91       	pop	r28
- 20e:	1f 91       	pop	r17
- 210:	0f 91       	pop	r16
- 212:	08 95       	ret
+ 2c2:	4a e0       	ldi	r20, 0x0A	; 10
+ 2c4:	50 e0       	ldi	r21, 0x00	; 0
+ 2c6:	bf 01       	movw	r22, r30
+ 2c8:	c8 01       	movw	r24, r16
+ 2ca:	a9 d0       	rcall	.+338    	; 0x41e <itoa>
+	
+	for(int i = 4; i >= numberCount + 1; i--)
+ 2cc:	c7 01       	movw	r24, r14
+ 2ce:	01 96       	adiw	r24, 0x01	; 1
+ 2d0:	05 97       	sbiw	r24, 0x05	; 5
+ 2d2:	54 f4       	brge	.+20     	; 0x2e8 <writeLedDisplayB+0x8a>
+ 2d4:	04 e0       	ldi	r16, 0x04	; 4
+ 2d6:	10 e0       	ldi	r17, 0x00	; 0
+		spi_writeWord(i, 15);
+ 2d8:	6f e0       	ldi	r22, 0x0F	; 15
+ 2da:	80 2f       	mov	r24, r16
+ 2dc:	34 df       	rcall	.-408    	; 0x146 <spi_writeWord>
+	
+	int numberCount = getDigitCount(abs(value));
+	char num[numberCount];
+	itoa(abs(value), num, 10);
+	
+	for(int i = 4; i >= numberCount + 1; i--)
+ 2de:	01 50       	subi	r16, 0x01	; 1
+ 2e0:	11 09       	sbc	r17, r1
+ 2e2:	e0 16       	cp	r14, r16
+ 2e4:	f1 06       	cpc	r15, r17
+ 2e6:	c1 f7       	brne	.-16     	; 0x2d8 <writeLedDisplayB+0x7a>
+		spi_writeWord(i, 15);
+	spi_writeWord(numberCount + 1, (value < 0) ? 10 : 15);
+ 2e8:	dd 20       	and	r13, r13
+ 2ea:	14 f0       	brlt	.+4      	; 0x2f0 <writeLedDisplayB+0x92>
+ 2ec:	6f e0       	ldi	r22, 0x0F	; 15
+ 2ee:	01 c0       	rjmp	.+2      	; 0x2f2 <writeLedDisplayB+0x94>
+ 2f0:	6a e0       	ldi	r22, 0x0A	; 10
+ 2f2:	de 2c       	mov	r13, r14
+ 2f4:	81 e0       	ldi	r24, 0x01	; 1
+ 2f6:	8e 0d       	add	r24, r14
+ 2f8:	26 df       	rcall	.-436    	; 0x146 <spi_writeWord>
+	int currentAddress = numberCount;
+	for(int i = 0; i < numberCount; i++)
+ 2fa:	1e 14       	cp	r1, r14
+ 2fc:	1f 04       	cpc	r1, r15
+ 2fe:	64 f4       	brge	.+24     	; 0x318 <writeLedDisplayB+0xba>
+ 300:	83 01       	movw	r16, r6
+ 302:	e6 0c       	add	r14, r6
+ 304:	f7 1c       	adc	r15, r7
+	{
+		spi_writeWord(currentAddress, num[i]);
+ 306:	f8 01       	movw	r30, r16
+ 308:	61 91       	ld	r22, Z+
+ 30a:	8f 01       	movw	r16, r30
+ 30c:	8d 2d       	mov	r24, r13
+ 30e:	1b df       	rcall	.-458    	; 0x146 <spi_writeWord>
+ 310:	da 94       	dec	r13
+	
+	for(int i = 4; i >= numberCount + 1; i--)
+		spi_writeWord(i, 15);
+	spi_writeWord(numberCount + 1, (value < 0) ? 10 : 15);
+	int currentAddress = numberCount;
+	for(int i = 0; i < numberCount; i++)
+ 312:	0e 15       	cp	r16, r14
+ 314:	1f 05       	cpc	r17, r15
+ 316:	b9 f7       	brne	.-18     	; 0x306 <writeLedDisplayB+0xa8>
+ 318:	0f b6       	in	r0, 0x3f	; 63
+ 31a:	f8 94       	cli
+ 31c:	9e be       	out	0x3e, r9	; 62
+ 31e:	0f be       	out	0x3f, r0	; 63
+ 320:	8d be       	out	0x3d, r8	; 61
+ 322:	05 c0       	rjmp	.+10     	; 0x32e <writeLedDisplayB+0xd0>
 
-00000214 <main>:
- 214:	cf 93       	push	r28
+// Write value of a negative or positive value to display
+void writeLedDisplayB(int value)
+{
+	if(value > 999 || value < -999)
+		return;
+ 324:	0f b6       	in	r0, 0x3f	; 63
+ 326:	f8 94       	cli
+ 328:	be be       	out	0x3e, r11	; 62
+ 32a:	0f be       	out	0x3f, r0	; 63
+ 32c:	ad be       	out	0x3d, r10	; 61
+	for(int i = 0; i < numberCount; i++)
+	{
+		spi_writeWord(currentAddress, num[i]);
+		currentAddress--;
+	}
+}
+ 32e:	0f b6       	in	r0, 0x3f	; 63
+ 330:	f8 94       	cli
+ 332:	be be       	out	0x3e, r11	; 62
+ 334:	0f be       	out	0x3f, r0	; 63
+ 336:	ad be       	out	0x3d, r10	; 61
+ 338:	df 91       	pop	r29
+ 33a:	cf 91       	pop	r28
+ 33c:	1f 91       	pop	r17
+ 33e:	0f 91       	pop	r16
+ 340:	ff 90       	pop	r15
+ 342:	ef 90       	pop	r14
+ 344:	df 90       	pop	r13
+ 346:	cf 90       	pop	r12
+ 348:	bf 90       	pop	r11
+ 34a:	af 90       	pop	r10
+ 34c:	9f 90       	pop	r9
+ 34e:	8f 90       	pop	r8
+ 350:	7f 90       	pop	r7
+ 352:	6f 90       	pop	r6
+ 354:	08 95       	ret
+
+00000356 <main>:
 
 int main()
 {
+ 356:	cf 93       	push	r28
 	DDRB=0x01; // Set PB0 pin as output for display select
- 216:	81 e0       	ldi	r24, 0x01	; 1
- 218:	87 bb       	out	0x17, r24	; 23
+ 358:	81 e0       	ldi	r24, 0x01	; 1
+ 35a:	87 bb       	out	0x17, r24	; 23
 	spi_masterInit(); // Initialize spi module
- 21a:	52 df       	rcall	.-348    	; 0xc0 <spi_masterInit>
+ 35c:	b1 de       	rcall	.-670    	; 0xc0 <spi_masterInit>
 	displayDriverInit(); // Initialize display chip
- 21c:	73 df       	rcall	.-282    	; 0x104 <displayDriverInit>
- 21e:	c1 e0       	ldi	r28, 0x01	; 1
+ 35e:	d2 de       	rcall	.-604    	; 0x104 <displayDriverInit>
+ 360:	c1 e0       	ldi	r28, 0x01	; 1
 	// clear display (all zero's)
 	for (char i =1; i<=4; i++)
- 220:	60 e0       	ldi	r22, 0x00	; 0
+ 362:	60 e0       	ldi	r22, 0x00	; 0
 	spi_writeWord(i, 0);
- 222:	8c 2f       	mov	r24, r28
- 224:	90 df       	rcall	.-224    	; 0x146 <spi_writeWord>
- 226:	cf 5f       	subi	r28, 0xFF	; 255
+ 364:	8c 2f       	mov	r24, r28
+ 366:	ef de       	rcall	.-546    	; 0x146 <spi_writeWord>
+ 368:	cf 5f       	subi	r28, 0xFF	; 255
 {
 	DDRB=0x01; // Set PB0 pin as output for display select
 	spi_masterInit(); // Initialize spi module
 	displayDriverInit(); // Initialize display chip
 	// clear display (all zero's)
 	for (char i =1; i<=4; i++)
- 228:	c5 30       	cpi	r28, 0x05	; 5
- 22a:	d1 f7       	brne	.-12     	; 0x220 <main+0xc>
+ 36a:	c5 30       	cpi	r28, 0x05	; 5
+ 36c:	d1 f7       	brne	.-12     	; 0x362 <main+0xc>
 	spi_writeWord(i, 0);
 
 	wait(1000);
- 22c:	88 ee       	ldi	r24, 0xE8	; 232
- 22e:	93 e0       	ldi	r25, 0x03	; 3
- 230:	36 df       	rcall	.-404    	; 0x9e <wait>
+ 36e:	88 ee       	ldi	r24, 0xE8	; 232
+ 370:	93 e0       	ldi	r25, 0x03	; 3
+ 372:	95 de       	rcall	.-726    	; 0x9e <wait>
 	writeLedDisplayA(8739);
- 232:	83 e2       	ldi	r24, 0x23	; 35
- 234:	92 e2       	ldi	r25, 0x22	; 34
- 236:	96 df       	rcall	.-212    	; 0x164 <writeLedDisplayA>
+ 374:	83 e2       	ldi	r24, 0x23	; 35
+ 376:	92 e2       	ldi	r25, 0x22	; 34
+ 378:	09 df       	rcall	.-494    	; 0x18c <writeLedDisplayA>
 	wait(2000);
- 238:	80 ed       	ldi	r24, 0xD0	; 208
- 23a:	97 e0       	ldi	r25, 0x07	; 7
- 23c:	30 df       	rcall	.-416    	; 0x9e <wait>
+ 37a:	80 ed       	ldi	r24, 0xD0	; 208
+ 37c:	97 e0       	ldi	r25, 0x07	; 7
+ 37e:	8f de       	rcall	.-738    	; 0x9e <wait>
 	writeLedDisplayA(245);
- 23e:	85 ef       	ldi	r24, 0xF5	; 245
- 240:	90 e0       	ldi	r25, 0x00	; 0
- 242:	90 df       	rcall	.-224    	; 0x164 <writeLedDisplayA>
+ 380:	85 ef       	ldi	r24, 0xF5	; 245
+ 382:	90 e0       	ldi	r25, 0x00	; 0
+ 384:	03 df       	rcall	.-506    	; 0x18c <writeLedDisplayA>
 	wait(2000);
- 244:	80 ed       	ldi	r24, 0xD0	; 208
- 246:	97 e0       	ldi	r25, 0x07	; 7
- 248:	2a df       	rcall	.-428    	; 0x9e <wait>
-	writeLedDisplayB(459);
- 24a:	8b ec       	ldi	r24, 0xCB	; 203
- 24c:	91 e0       	ldi	r25, 0x01	; 1
- 24e:	ad df       	rcall	.-166    	; 0x1aa <writeLedDisplayB>
- 250:	88 ee       	ldi	r24, 0xE8	; 232
-	wait(1000);
- 252:	93 e0       	ldi	r25, 0x03	; 3
- 254:	24 df       	rcall	.-440    	; 0x9e <wait>
- 256:	81 e0       	ldi	r24, 0x01	; 1
- 258:	90 e0       	ldi	r25, 0x00	; 0
+ 386:	80 ed       	ldi	r24, 0xD0	; 208
+ 388:	97 e0       	ldi	r25, 0x07	; 7
+ 38a:	89 de       	rcall	.-750    	; 0x9e <wait>
+	writeLedDisplayA(25);
+ 38c:	89 e1       	ldi	r24, 0x19	; 25
+ 38e:	90 e0       	ldi	r25, 0x00	; 0
+ 390:	fd de       	rcall	.-518    	; 0x18c <writeLedDisplayA>
+	wait(2000);
+ 392:	80 ed       	ldi	r24, 0xD0	; 208
+ 394:	97 e0       	ldi	r25, 0x07	; 7
+ 396:	83 de       	rcall	.-762    	; 0x9e <wait>
+	writeLedDisplayA(4);
+ 398:	84 e0       	ldi	r24, 0x04	; 4
+ 39a:	90 e0       	ldi	r25, 0x00	; 0
+ 39c:	f7 de       	rcall	.-530    	; 0x18c <writeLedDisplayA>
+	wait(2000);
+ 39e:	80 ed       	ldi	r24, 0xD0	; 208
+ 3a0:	97 e0       	ldi	r25, 0x07	; 7
+ 3a2:	7d de       	rcall	.-774    	; 0x9e <wait>
+	writeLedDisplayB(-459);
+ 3a4:	85 e3       	ldi	r24, 0x35	; 53
+ 3a6:	9e ef       	ldi	r25, 0xFE	; 254
+ 3a8:	5a df       	rcall	.-332    	; 0x25e <writeLedDisplayB>
+	wait(2000);
+ 3aa:	80 ed       	ldi	r24, 0xD0	; 208
+ 3ac:	97 e0       	ldi	r25, 0x07	; 7
+ 3ae:	77 de       	rcall	.-786    	; 0x9e <wait>
+	writeLedDisplayB(-46);
+ 3b0:	82 ed       	ldi	r24, 0xD2	; 210
+ 3b2:	9f ef       	ldi	r25, 0xFF	; 255
+ 3b4:	54 df       	rcall	.-344    	; 0x25e <writeLedDisplayB>
+ 3b6:	80 ed       	ldi	r24, 0xD0	; 208
+	wait(2000);
+ 3b8:	97 e0       	ldi	r25, 0x07	; 7
+ 3ba:	71 de       	rcall	.-798    	; 0x9e <wait>
+ 3bc:	8b ef       	ldi	r24, 0xFB	; 251
+ 3be:	9f ef       	ldi	r25, 0xFF	; 255
+	writeLedDisplayB(-5);
+ 3c0:	4e df       	rcall	.-356    	; 0x25e <writeLedDisplayB>
+ 3c2:	80 ed       	ldi	r24, 0xD0	; 208
+ 3c4:	97 e0       	ldi	r25, 0x07	; 7
+ 3c6:	6b de       	rcall	.-810    	; 0x9e <wait>
+	wait(2000);
+ 3c8:	81 e0       	ldi	r24, 0x01	; 1
+ 3ca:	90 e0       	ldi	r25, 0x00	; 0
+ 3cc:	cf 91       	pop	r28
+ 3ce:	08 95       	ret
+
+000003d0 <__divmodhi4>:
 	return (1);
- 25a:	cf 91       	pop	r28
- 25c:	08 95       	ret
+ 3d0:	97 fb       	bst	r25, 7
+ 3d2:	07 2e       	mov	r0, r23
+ 3d4:	16 f4       	brtc	.+4      	; 0x3da <__divmodhi4+0xa>
+ 3d6:	00 94       	com	r0
+ 3d8:	06 d0       	rcall	.+12     	; 0x3e6 <__divmodhi4_neg1>
+ 3da:	77 fd       	sbrc	r23, 7
+ 3dc:	08 d0       	rcall	.+16     	; 0x3ee <__divmodhi4_neg2>
+ 3de:	0b d0       	rcall	.+22     	; 0x3f6 <__udivmodhi4>
+ 3e0:	07 fc       	sbrc	r0, 7
+ 3e2:	05 d0       	rcall	.+10     	; 0x3ee <__divmodhi4_neg2>
+ 3e4:	3e f4       	brtc	.+14     	; 0x3f4 <__divmodhi4_exit>
 
-0000025e <itoa>:
- 25e:	45 32       	cpi	r20, 0x25	; 37
- 260:	51 05       	cpc	r21, r1
- 262:	18 f4       	brcc	.+6      	; 0x26a <itoa+0xc>
- 264:	42 30       	cpi	r20, 0x02	; 2
- 266:	08 f0       	brcs	.+2      	; 0x26a <itoa+0xc>
- 268:	04 c0       	rjmp	.+8      	; 0x272 <__itoa_ncheck>
- 26a:	fb 01       	movw	r30, r22
- 26c:	10 82       	st	Z, r1
- 26e:	cb 01       	movw	r24, r22
- 270:	08 95       	ret
+000003e6 <__divmodhi4_neg1>:
+ 3e6:	90 95       	com	r25
+ 3e8:	81 95       	neg	r24
+ 3ea:	9f 4f       	sbci	r25, 0xFF	; 255
+ 3ec:	08 95       	ret
 
-00000272 <__itoa_ncheck>:
- 272:	bb 27       	eor	r27, r27
- 274:	4a 30       	cpi	r20, 0x0A	; 10
- 276:	31 f4       	brne	.+12     	; 0x284 <__itoa_ncheck+0x12>
- 278:	99 23       	and	r25, r25
- 27a:	22 f4       	brpl	.+8      	; 0x284 <__itoa_ncheck+0x12>
- 27c:	bd e2       	ldi	r27, 0x2D	; 45
- 27e:	90 95       	com	r25
- 280:	81 95       	neg	r24
- 282:	9f 4f       	sbci	r25, 0xFF	; 255
- 284:	01 c0       	rjmp	.+2      	; 0x288 <__utoa_common>
+000003ee <__divmodhi4_neg2>:
+ 3ee:	70 95       	com	r23
+ 3f0:	61 95       	neg	r22
+ 3f2:	7f 4f       	sbci	r23, 0xFF	; 255
 
-00000286 <__utoa_ncheck>:
- 286:	bb 27       	eor	r27, r27
+000003f4 <__divmodhi4_exit>:
+ 3f4:	08 95       	ret
 
-00000288 <__utoa_common>:
- 288:	fb 01       	movw	r30, r22
- 28a:	55 27       	eor	r21, r21
- 28c:	aa 27       	eor	r26, r26
- 28e:	88 0f       	add	r24, r24
- 290:	99 1f       	adc	r25, r25
- 292:	aa 1f       	adc	r26, r26
- 294:	a4 17       	cp	r26, r20
- 296:	10 f0       	brcs	.+4      	; 0x29c <__utoa_common+0x14>
- 298:	a4 1b       	sub	r26, r20
- 29a:	83 95       	inc	r24
- 29c:	50 51       	subi	r21, 0x10	; 16
- 29e:	b9 f7       	brne	.-18     	; 0x28e <__utoa_common+0x6>
- 2a0:	a0 5d       	subi	r26, 0xD0	; 208
- 2a2:	aa 33       	cpi	r26, 0x3A	; 58
- 2a4:	08 f0       	brcs	.+2      	; 0x2a8 <__utoa_common+0x20>
- 2a6:	a9 5d       	subi	r26, 0xD9	; 217
- 2a8:	a1 93       	st	Z+, r26
- 2aa:	00 97       	sbiw	r24, 0x00	; 0
- 2ac:	79 f7       	brne	.-34     	; 0x28c <__utoa_common+0x4>
- 2ae:	b1 11       	cpse	r27, r1
- 2b0:	b1 93       	st	Z+, r27
- 2b2:	11 92       	st	Z+, r1
- 2b4:	cb 01       	movw	r24, r22
- 2b6:	00 c0       	rjmp	.+0      	; 0x2b8 <strrev>
+000003f6 <__udivmodhi4>:
+ 3f6:	aa 1b       	sub	r26, r26
+ 3f8:	bb 1b       	sub	r27, r27
+ 3fa:	51 e1       	ldi	r21, 0x11	; 17
+ 3fc:	07 c0       	rjmp	.+14     	; 0x40c <__udivmodhi4_ep>
 
-000002b8 <strrev>:
- 2b8:	dc 01       	movw	r26, r24
- 2ba:	fc 01       	movw	r30, r24
- 2bc:	67 2f       	mov	r22, r23
- 2be:	71 91       	ld	r23, Z+
- 2c0:	77 23       	and	r23, r23
- 2c2:	e1 f7       	brne	.-8      	; 0x2bc <strrev+0x4>
- 2c4:	32 97       	sbiw	r30, 0x02	; 2
- 2c6:	04 c0       	rjmp	.+8      	; 0x2d0 <strrev+0x18>
- 2c8:	7c 91       	ld	r23, X
- 2ca:	6d 93       	st	X+, r22
- 2cc:	70 83       	st	Z, r23
- 2ce:	62 91       	ld	r22, -Z
- 2d0:	ae 17       	cp	r26, r30
- 2d2:	bf 07       	cpc	r27, r31
- 2d4:	c8 f3       	brcs	.-14     	; 0x2c8 <strrev+0x10>
- 2d6:	08 95       	ret
+000003fe <__udivmodhi4_loop>:
+ 3fe:	aa 1f       	adc	r26, r26
+ 400:	bb 1f       	adc	r27, r27
+ 402:	a6 17       	cp	r26, r22
+ 404:	b7 07       	cpc	r27, r23
+ 406:	10 f0       	brcs	.+4      	; 0x40c <__udivmodhi4_ep>
+ 408:	a6 1b       	sub	r26, r22
+ 40a:	b7 0b       	sbc	r27, r23
 
-000002d8 <_exit>:
- 2d8:	f8 94       	cli
+0000040c <__udivmodhi4_ep>:
+ 40c:	88 1f       	adc	r24, r24
+ 40e:	99 1f       	adc	r25, r25
+ 410:	5a 95       	dec	r21
+ 412:	a9 f7       	brne	.-22     	; 0x3fe <__udivmodhi4_loop>
+ 414:	80 95       	com	r24
+ 416:	90 95       	com	r25
+ 418:	bc 01       	movw	r22, r24
+ 41a:	cd 01       	movw	r24, r26
+ 41c:	08 95       	ret
 
-000002da <__stop_program>:
- 2da:	ff cf       	rjmp	.-2      	; 0x2da <__stop_program>
+0000041e <itoa>:
+ 41e:	45 32       	cpi	r20, 0x25	; 37
+ 420:	51 05       	cpc	r21, r1
+ 422:	18 f4       	brcc	.+6      	; 0x42a <itoa+0xc>
+ 424:	42 30       	cpi	r20, 0x02	; 2
+ 426:	08 f0       	brcs	.+2      	; 0x42a <itoa+0xc>
+ 428:	04 c0       	rjmp	.+8      	; 0x432 <__itoa_ncheck>
+ 42a:	fb 01       	movw	r30, r22
+ 42c:	10 82       	st	Z, r1
+ 42e:	cb 01       	movw	r24, r22
+ 430:	08 95       	ret
+
+00000432 <__itoa_ncheck>:
+ 432:	bb 27       	eor	r27, r27
+ 434:	4a 30       	cpi	r20, 0x0A	; 10
+ 436:	31 f4       	brne	.+12     	; 0x444 <__itoa_ncheck+0x12>
+ 438:	99 23       	and	r25, r25
+ 43a:	22 f4       	brpl	.+8      	; 0x444 <__itoa_ncheck+0x12>
+ 43c:	bd e2       	ldi	r27, 0x2D	; 45
+ 43e:	90 95       	com	r25
+ 440:	81 95       	neg	r24
+ 442:	9f 4f       	sbci	r25, 0xFF	; 255
+ 444:	01 c0       	rjmp	.+2      	; 0x448 <__utoa_common>
+
+00000446 <__utoa_ncheck>:
+ 446:	bb 27       	eor	r27, r27
+
+00000448 <__utoa_common>:
+ 448:	fb 01       	movw	r30, r22
+ 44a:	55 27       	eor	r21, r21
+ 44c:	aa 27       	eor	r26, r26
+ 44e:	88 0f       	add	r24, r24
+ 450:	99 1f       	adc	r25, r25
+ 452:	aa 1f       	adc	r26, r26
+ 454:	a4 17       	cp	r26, r20
+ 456:	10 f0       	brcs	.+4      	; 0x45c <__utoa_common+0x14>
+ 458:	a4 1b       	sub	r26, r20
+ 45a:	83 95       	inc	r24
+ 45c:	50 51       	subi	r21, 0x10	; 16
+ 45e:	b9 f7       	brne	.-18     	; 0x44e <__utoa_common+0x6>
+ 460:	a0 5d       	subi	r26, 0xD0	; 208
+ 462:	aa 33       	cpi	r26, 0x3A	; 58
+ 464:	08 f0       	brcs	.+2      	; 0x468 <__utoa_common+0x20>
+ 466:	a9 5d       	subi	r26, 0xD9	; 217
+ 468:	a1 93       	st	Z+, r26
+ 46a:	00 97       	sbiw	r24, 0x00	; 0
+ 46c:	79 f7       	brne	.-34     	; 0x44c <__utoa_common+0x4>
+ 46e:	b1 11       	cpse	r27, r1
+ 470:	b1 93       	st	Z+, r27
+ 472:	11 92       	st	Z+, r1
+ 474:	cb 01       	movw	r24, r22
+ 476:	00 c0       	rjmp	.+0      	; 0x478 <strrev>
+
+00000478 <strrev>:
+ 478:	dc 01       	movw	r26, r24
+ 47a:	fc 01       	movw	r30, r24
+ 47c:	67 2f       	mov	r22, r23
+ 47e:	71 91       	ld	r23, Z+
+ 480:	77 23       	and	r23, r23
+ 482:	e1 f7       	brne	.-8      	; 0x47c <strrev+0x4>
+ 484:	32 97       	sbiw	r30, 0x02	; 2
+ 486:	04 c0       	rjmp	.+8      	; 0x490 <strrev+0x18>
+ 488:	7c 91       	ld	r23, X
+ 48a:	6d 93       	st	X+, r22
+ 48c:	70 83       	st	Z, r23
+ 48e:	62 91       	ld	r22, -Z
+ 490:	ae 17       	cp	r26, r30
+ 492:	bf 07       	cpc	r27, r31
+ 494:	c8 f3       	brcs	.-14     	; 0x488 <strrev+0x10>
+ 496:	08 95       	ret
+
+00000498 <_exit>:
+ 498:	f8 94       	cli
+
+0000049a <__stop_program>:
+ 49a:	ff cf       	rjmp	.-2      	; 0x49a <__stop_program>

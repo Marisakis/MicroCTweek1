@@ -106,17 +106,16 @@ void spi_writeWord(unsigned char address, unsigned char data)
 	spi_slaveDeSelect(0); // Deselect display chip
 }
 
-// Returns the count of numbers in the value given
-int getNumberCount(int value)
-{
-	if(value < 10)
-		return 1;
-	else if(value > 9)
-		return 2
-	else if(value > 99)
-		return 3
-	else if(value > 999)
-		return 4
+// Returns the number of digits in the value given
+int getDigitCount(int value)
+{	
+	int count = 0;
+	while(value > 0)
+	{
+		value /= 10;
+		count++;
+	}
+	return count;
 }
 
 // Write value of only positive value to display
@@ -124,18 +123,14 @@ void writeLedDisplayA(int value)
 {
 	if(value < 0 || value > 9999)
 		return;
-		
-	//char num[4];
-	//itoa(value, num, 10);
-	//spi_writeWord(4, num[0]);
-	//spi_writeWord(3, num[1]);
-	//spi_writeWord(2, num[2]);
-	//spi_writeWord(1, num[3]);
-	int numberCount = getNumberCount(value);
+	
+	int numberCount = getDigitCount(value);
 	char num[numberCount];
 	itoa(value, num, 10);
 	
 	int currentAddress = numberCount;
+	for(int i = 4; i >= numberCount; i--)
+		spi_writeWord(i, 15);
 	for(int i = 0; i < numberCount; i++)
 	{
 		spi_writeWord(currentAddress, num[i]);
@@ -149,16 +144,12 @@ void writeLedDisplayB(int value)
 	if(value > 999 || value < -999)
 		return;
 	
-	//char num[3];
-	//itoa(abs(value), num, 10);
-	//spi_writeWord(4, (value < 0) ? 10 : 15);
-	//spi_writeWord(3, num[0]);
-	//spi_writeWord(2, num[1]);
-	//spi_writeWord(1, num[2]);
-	int numberCount = getNumberCount(abs(value));
+	int numberCount = getDigitCount(abs(value));
 	char num[numberCount];
 	itoa(abs(value), num, 10);
 	
+	for(int i = 4; i >= numberCount + 1; i--)
+		spi_writeWord(i, 15);
 	spi_writeWord(numberCount + 1, (value < 0) ? 10 : 15);
 	int currentAddress = numberCount;
 	for(int i = 0; i < numberCount; i++)
@@ -182,9 +173,15 @@ int main()
 	wait(2000);
 	writeLedDisplayA(245);
 	wait(2000);
-	writeLedDisplayB(459);
+	writeLedDisplayA(25);
 	wait(2000);
-	writeLedDisplayB(-54);
-	wait(1000);
+	writeLedDisplayA(4);
+	wait(2000);
+	writeLedDisplayB(-459);
+	wait(2000);
+	writeLedDisplayB(-46);
+	wait(2000);
+	writeLedDisplayB(-5);
+	wait(2000);
 	return (1);
 }
