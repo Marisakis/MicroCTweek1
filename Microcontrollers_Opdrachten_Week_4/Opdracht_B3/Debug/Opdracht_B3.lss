@@ -17,15 +17,15 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
   6 .debug_abbrev 00000922  00000000  00000000  00000f67  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_line   00000467  00000000  00000000  00001889  2**0
+  7 .debug_line   0000048f  00000000  00000000  00001889  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_frame  000000d8  00000000  00000000  00001cf0  2**2
+  8 .debug_frame  000000d8  00000000  00000000  00001d18  2**2
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_str    000004bf  00000000  00000000  00001dc8  2**0
+  9 .debug_str    000004a3  00000000  00000000  00001df0  2**0
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_loc    000002b6  00000000  00000000  00002287  2**0
+ 10 .debug_loc    000002b6  00000000  00000000  00002293  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_ranges 00000050  00000000  00000000  0000253d  2**0
+ 11 .debug_ranges 00000050  00000000  00000000  00002549  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -330,7 +330,7 @@ int main( void )
  1a6:	81 bb       	out	0x11, r24	; 17
 	adcInit();	
  1a8:	ea df       	rcall	.-44     	; 0x17e <adcInit>
-	init();				// initialize ADC
+	init();				// initialize ADC		
  1aa:	95 df       	rcall	.-214    	; 0xd6 <init>
  1ac:	84 b1       	in	r24, 0x04	; 4
 

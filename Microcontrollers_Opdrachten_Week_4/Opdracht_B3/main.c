@@ -123,7 +123,7 @@ int main( void )
 	DDRB = 0xFF;	
 	DDRD = 0xFF;			// set PORTB for output
 	adcInit();	
-	init();				// initialize ADC
+	init();				// initialize ADC		
 
 	while (1)
 	{
